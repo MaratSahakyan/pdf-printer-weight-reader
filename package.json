@@ -1,0 +1,26 @@
+{
+  "name": "pdf-printer-weight-reader-service",
+  "version": "1.0.0",
+  "description": "A simple service to print PDF documents and read weight from scale",
+  "type": "module",
+  "main": "index.mjs",
+  "scripts": {
+    "start": "nodemon index.mjs"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@serialport/list": "^11.0.0",
+    "@serialport/parser-readline": "^11.0.0",
+    "base64-img": "^1.0.4",
+    "bwip-js": "^3.4.0",
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
+    "nodemon": "^2.0.22",
+    "pdf-lib": "^1.17.1",
+    "pdf-to-printer": "^1.7.0",
+    "puppeteer": "^20.2.1",
+    "serialport": "^11.0.0",
+    "util": "^0.12.5"
+  }
+}
