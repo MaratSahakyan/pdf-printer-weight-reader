@@ -1,9 +1,9 @@
 {
-  "name": "pdf-printer-weight-reader-service",
+  "name": "pdf-printing-service",
   "version": "1.0.0",
-  "description": "A simple service to print PDF documents and read weight from scale",
+  "description": "A simple service to print PDF documents",
   "type": "module",
-  "main": "index.mjs",
+  "main": "index.js",
   "scripts": {
     "start": "nodemon index.mjs"
   },
@@ -12,6 +12,7 @@
   "dependencies": {
     "@serialport/list": "^11.0.0",
     "@serialport/parser-readline": "^11.0.0",
+    "axios": "^1.4.0",
     "base64-img": "^1.0.4",
     "bwip-js": "^3.4.0",
     "cors": "^2.8.5",

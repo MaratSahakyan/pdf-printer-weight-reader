@@ -1,3 +1,4 @@
+import axios from "axios";
 import cors from "cors";
 import express from "express";
 import fs from "fs";
@@ -20,8 +21,16 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const platform = os.platform();
 
 const serialPortName = "Prolific USB-to-Serial Comm Port";
+const printerName = "Gprinter GP-1324D";
 
-let serialPortPath = "";
+let serialPortPath = ""; // Set the correct serial port path
+
+const getCorrectPrinter = async () => {
+  const printerList = await ptp.getPrinters();
+  const hasPrinterNameinList = printerList.includes(printerName);
+
+  return hasPrinterNameinList ? printerName : "";
+};
 
 SerialPort.list()
   .then((ports) => {
@@ -38,6 +47,11 @@ SerialPort.list()
 
 app.get("/getweightfromscale", (req, res) => {
   const sendData = (code, weight) => res.status(code).send(weight);
+
+  if (!serialPortPath) {
+    console.log(`You don't have available COM port !!!`);
+    return;
+  }
 
   const port = new SerialPort({
     path: serialPortPath,
@@ -87,60 +101,119 @@ app.get("/getweightfromscale", (req, res) => {
   });
 });
 
-app.post("", express.raw({ type: "application/json" }), async (req, res) => {
-  const html = await selectCorrespondenceHtml(req.body);
+///////////////////////////////////////////////////////////////
 
-  const options = {
-    format: "A5",
-    orientation: "portrait",
-    border: "1mm",
-  };
+app.get("/print/parcel/:trackCode", async (req, res) => {
+  const { trackCode } = req.params;
+  const trimedTrackCode = trackCode?.trim();
 
-  const document = {
-    html: html,
-    data: {},
-    path: `${__dirname}${platform === "win32" ? "\\" : "/"}output.pdf`,
-    type: "",
-  };
+  if (!trimedTrackCode) {
+    res.status(400).send("Bad Request.");
+    return;
+  }
+  const url = "https://api.dobropost.com/api/sending-registry/data/trackCode";
 
   try {
-    const browser = await puppeteer.launch({
-      headless: "new",
-      executablePath:
-        "./node_modules/puppeteer/.local-chromium/win64-656675/chrome-win/chrome.exe",
-    });
-    const page = await browser.newPage();
-
-    await page.setContent(document.html);
-
-    const pdfData = await page.pdf({
-      format: options.format,
-      landscape: options.orientation === "landscape",
-      printBackground: true,
+    const response = await axios.get(url, {
+      params: {
+        trackCode: trimedTrackCode,
+      },
     });
 
-    await browser.close();
+    const data = response.data;
 
-    const pdfDoc = await PDFDocument.create();
+    if (!data) {
+      res.status(404).send("Parcel Not Found!");
+    }
 
-    const generatedPdf = await PDFDocument.load(pdfData);
+    const deliveryTransportId =
+      data?.data?.delivery_METHOD?.trackCodePrefix?.replace("DBRPST", "");
 
-    const [generatedPage] = await pdfDoc.copyPages(generatedPdf, [0]);
-    pdfDoc.addPage(generatedPage);
+    const requestData = {
+      printCheckName: "SHIPMENT_TAG_AFTER_WEIGHT",
+      iewnumber: data?.data?.iewnumber || "",
+      receiverFullName: data?.data?.receiver_FULL_NAME || "",
+      receiverCity: data?.data?.receiver_CITY || "",
+      deliveryCost: data?.data?.deliveryCost || "",
+      parcelCost: data?.data?.parcel_COST || "",
+      weight: data?.data?.weight || data?.data?.actual_WEIGHT || "",
+      lastMileOperatorId: data?.lastMileOperator?.id || "",
+      lastMileDeliveryMethodId: data?.lastMileDeliveryMethod?.id || "",
+      deliveryTransportId: deliveryTransportId || "",
+    };
 
-    const pdfBytes = await pdfDoc.save();
-    await writeFileAsync(document.path, pdfBytes);
-
-    await ptp.print(document.path, {});
-
-    res.status(204).send();
+    axios.post("http://localhost:3000/print", requestData);
+    res.status(200).send("ok");
   } catch (error) {
-    console.error(error);
+    console.error("Error making the request:", error);
     res
       .status(500)
       .send("An error occurred during PDF generation and printing.");
   }
 });
+
+///////////////////////////////////////////////////////////////
+
+const browser = await puppeteer.launch({
+  headless: "new",
+});
+
+const page = await browser.newPage();
+
+app.post(
+  "/print",
+  express.raw({ type: "application/json" }),
+  async (req, res) => {
+    const html = await selectCorrespondenceHtml(req.body);
+
+    const options = {
+      format: "A5",
+      orientation: "portrait",
+      border: "1mm",
+    };
+
+    const document = {
+      html: html,
+      path: `${__dirname}${platform === "win32" ? "\\" : "/"}output.pdf`,
+    };
+
+    try {
+      await page.setContent(document.html, { waitUntil: "domcontentloaded" });
+
+      const pdfData = await page.pdf({
+        format: options.format,
+        landscape: options.orientation === "landscape",
+        printBackground: true,
+      });
+
+      const pdfDoc = await PDFDocument.create();
+
+      const generatedPdf = await PDFDocument.load(pdfData);
+
+      const [generatedPage] = await pdfDoc.copyPages(generatedPdf, [0]);
+      pdfDoc.addPage(generatedPage);
+
+      const pdfBytes = await pdfDoc.save();
+      await writeFileAsync(document.path, pdfBytes);
+
+      const correctPrinterName = await getCorrectPrinter();
+
+      if (!correctPrinterName) {
+        console.log(`Printer "${printerName}" not found.`);
+        return;
+      }
+
+      await ptp.print(document.path, { printer: correctPrinterName });
+
+      res.status(204).send();
+    } catch (error) {
+      console.error(error);
+      res
+        .status(500)
+        .send("An error occurred during PDF generation and printing.");
+    }
+  }
+);
 
 app.listen(port, () => {
   console.log(`PDF Printing Service listening on port ${port}`);

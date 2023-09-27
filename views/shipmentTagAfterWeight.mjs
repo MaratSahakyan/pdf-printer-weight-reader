@@ -11,11 +11,12 @@ const cdek = path.resolve(`${__dirname}/imgs/cdek.png`);
 
 const shipmentTagAfterWeight = async (data) => {
   const getMathodIconById = async () => {
-    const id = data?.lastMileDeliveryMethodId;
+    const id = Number(data?.lastMileDeliveryMethodId);
     if (id === 1) {
       const base64 = await convertImageToBase64(curierImg);
       return `<img style="width: 45px;" src="${base64}" alt="curier" />`;
-    } else if (id === 2) {
+    }
+    if (id === 2) {
       const base64 = await convertImageToBase64(freeLocationIcon);
       return `<img
             style="width: 45px;"
@@ -27,14 +28,25 @@ const shipmentTagAfterWeight = async (data) => {
   };
 
   const getIcon = async () => {
-    const id = data?.lastMileOperatorId;
-    if (+id === 2) {
+    const id = Number(data?.lastMileOperatorId);
+    if (id === 1) {
+      return `<div style="font-size: 40px; text-align: center;"><b>Новая Почта</b></div>`;
+    }
+    if (id === 2) {
       const base64 = await convertImageToBase64(sber);
       return `<img style="width: 80px;" src="${base64}" alt="SBER" />`;
-    } else if (id === 3) {
-      const base64 = await convertImageToBase64(cdek);
-      return `<img style="width: 80px;" src="${base64}" alt="CDEK" />`;
     }
+    if (id === 3) {
+      const base64 = await convertImageToBase64(cdek);
+      return `<img style="width: 110px;" src="${base64}" alt="CDEK" />`;
+    }
+    if (id === 4) {
+      return `<div style="font-size: 40px; text-align: center;"><b>ПВЗ DobroPost</b></div>`;
+    }
+    if (id === 5) {
+      return `<div style="font-size: 40px; text-align: center;"><b>Боксберри</b></div>`;
+    }
+
     return "";
   };
 
@@ -48,42 +60,44 @@ const shipmentTagAfterWeight = async (data) => {
     <meta charset="utf-8" />
     </head>
     <body>
-        <div style="background-color: white; min-width: 450px; min-height: 295px; width: 100%; height: 100%; padding: 20px; transform: rotate(90deg); margin-top: 80px;"
-            <div style="width: 100%; height: 100%; margin: 0 auto;">
+      <div style="background-color: white; min-width: 450px; min-height: 295px; width: 100%; height: 100%; padding: 20px; margin-top: 130px; margin-left: 50px; padding-left: 40px; transform: rotate(90deg) scale(1.1);" >
+            <div style="width: 100%; height: 100%; margin: 0 auto; padding-left: 40px;">
                 <div style="width: 100%; display: flex; flex-direction: column; align-items: center; padding-top: 100px;">
-                    <div style="font-size: 65px; font-family: 'Lato sans-serif'; text-align: center;">${
-                      data?.iewnumber
-                    }</div>
+                    <div style="font-size: 88px; font-family: 'Lato sans-serif'; text-align: center;">${data?.iewnumber}</div>
                 <div>
-                    <img src="data:image/png;base64,${barcodeImageBase64}" alt="Barcode" style="width: 550px; height: 150px;">
+                    <img src="data:image/png;base64,${barcodeImageBase64}" alt="Barcode" style="width: 770px; height: 180px;">
                 </div>
             </div>
-            <div style="padding: 30px;">
-                <div style="font-family: 'Lato sans-serif'; text-align: justify; font-weight: 700; font-size: 30px;">
-                    ${data?.receiver_FULL_NAME} / ${data?.receiver_CITY}
+            <div style="padding-top: 80px;">
+                <div style="font-family: 'Lato sans-serif'; text-align: justify; font-weight: 700; font-size: 40px;">
+                    ${data?.receiverFullName} / ${data?.receiverCity}
                 </div>
             </div>
-            <div style="display: flex; justify-content: space-between; padding: 30px;">
-                <div style="font-family: 'Lato sans-serif'; font-weight: 700; font-size: 40px;">
-                    <div>
-                        ${
-                          Math.round(data?.deliveryCost * data?.rate * 100) /
-                            100 ||
-                          Math.round(data?.parcel_COST * data?.rate * 100) / 100
-                        } ¥
+            <div style="display: flex; justify-content: space-between; width: 795px; padding-top: 60px;">
+                <div style="width: 795px; height: 150px; display: flex; align-items: center; border: 2px solid #000; display: flex;">
+                <div style="font-family: 'Lato sans-serif'; font-size: 70px; font-weight: 700; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 200px; height: 100%; text-align: center;">
+                        <div>${data?.weight}</div>
+                        <div>kg</div>
                     </div>
-                    <div>${data?.weight} kg</div>
-                </div>
-                <div style="width: 230px; height: 100px; border: 2px solid #000; display: flex;">
-                    <div style="width: 140px; height: 100%; display: flex; align-items: center; justify-content: space-between; padding: 5px;">
-                        <div>${deliveryMethodIcon}</div>
-                        <div>${methodIcon}</div>
-                    </div>
+
                     <div style="border: 1px solid #000; height: 100%;"></div>
-                        <div style="font-family: 'Lato sans-serif'; font-size: 45px; font-weight: 700; display: flex; align-items: center; justify-content: center; width: 90px; height: 100%;">
-                            ${data?.lastMileDeliveryMethodId}
-                        </div>
+
+                    <div style="height: 100%; display: flex; align-items: center; padding: 5px; min-width: 200px;">
+                        <div style="margin: auto;">${deliveryMethodIcon}</div>
                     </div>
+
+                    <div style="border: 1px solid #000; height: 100%;"></div>
+
+                    <div style="height: 100%; display: flex; align-items: center; padding: 5px; min-width: 200px;">
+                        <div style="margin: auto;">${methodIcon}</div>
+                    </div>
+
+                    <div style="border: 1px solid #000; height: 100%;"></div>
+
+                    <div style="font-family: 'Lato sans-serif'; font-size: 90px; font-weight: 700; display: flex; align-items: center; justify-content: center; min-width: 200px; height: 100%;">
+                        <div style="margin: auto;">${data?.deliveryTransportId}</div>
+                    </div>
+                  </div>
                 </div>
             </div>
         </div>

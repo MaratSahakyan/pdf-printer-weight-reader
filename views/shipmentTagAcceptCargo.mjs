@@ -5,10 +5,12 @@ import generateBarcodeImage from "../utils/generateBarcodeImage.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const unpackageIcon = path.resolve(`${__dirname}/imgs/unpackageIcon.png`);
+const packageBoxIcon = path.resolve(`${__dirname}/imgs/packageBoxIcon.png`);
 
 const shipmentTagAcceptCargo = async (data) => {
   const barcodeImageBase64 = await generateBarcodeImage(data?.number);
   const unpackageIconBase64 = await convertImageToBase64(unpackageIcon);
+  const packageBoxIconBase64 = await convertImageToBase64(packageBoxIcon);
 
   return `<!DOCTYPE html>
     <html>
@@ -16,7 +18,7 @@ const shipmentTagAcceptCargo = async (data) => {
     <meta charset="utf-8" />
     </head>
     <body>
-        <div style="width: 500px; height: 400px; background-color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: space-between; margin-top: 150px; transform: rotate(90deg);">
+        <div style="width: 500px; height: 400px; background-color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: space-between; margin-top: 150px;">
         <div style="width: 500px; height: 150px;">
           <img alt="barcode" src="data:image/png;base64,${barcodeImageBase64}" style="width: 500px; height: 150px;" />
           <div style="font-family: Lato, sans-serif; font-weight: 400; font-size: 70px; letter-spacing: 1px; text-align: center;">${
@@ -24,7 +26,7 @@ const shipmentTagAcceptCargo = async (data) => {
           }</div>
         </div>
         <div style="width: 500px; height: 150px; border: 2px solid #000; display: flex;">
-          <div style="height: 100%; width: 44%; font-family: Lato, sans-serif; font-weight: 400; padding: 3px; font-size: 25px;">${
+          <div style="max-height: 200px; width: 44%; font-family: Lato, sans-serif; font-weight: 400; padding: 3px; font-size: 25px; display: block; overflow: hidden; text-overflow: ellipsis; white-space; display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical;">${
             data.description || data.name
           }</div>
           <div style="border: 1px solid #000; height: 100%;"></div>
@@ -41,7 +43,7 @@ const shipmentTagAcceptCargo = async (data) => {
                 ${
                   data.hasUnpackageService > -1
                     ? `<img src="${unpackageIconBase64}" alt="unpackage" style="width: 80px; height: 70px;" />`
-                    : ""
+                    : `<img src="${packageBoxIconBase64}" alt="unpackage" style="width: 80px; height: 70px;" />`
                 }
               </div>
             </div>

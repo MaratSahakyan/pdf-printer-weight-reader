@@ -7,7 +7,7 @@ const generateBarcodeImage = async (barcodeData) => {
     scale: 2,
     width: 100,
     height: 100,
-    includetext: true,
+    includetext: false,
     textxalign: "center",
   });
 
